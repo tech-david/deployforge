@@ -1,0 +1,64 @@
+//archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false, onlyIfSuccessful: true
+//javadoc javadocDir: 'documentation/', keepAll: true
+pipeline {
+    agent any
+    tools { 
+        maven 'Maven3.6.3' 
+        nodejs 'NodeJs12.20' 
+    }
+    stages {
+        stage('Cleaning') {
+            steps {
+                sh 'echo Cleaning..'
+                cleanWs()
+            }
+        }
+        stage('Installing Angular') {
+            steps {
+                git branch: 'devops', url: 'https://github.com/revaturelabs/forge-frontend'
+                sh script:'''
+                #!/bin/bash
+                cd Forge
+                npm install
+                '''
+            }
+        }
+		stage('Installing SpringBoot') {
+            steps {
+                git branch: 'devops', url: 'https://github.com/revaturelabs/forge-review-service'
+                }
+        }
+       
+        stage('Building SpringBoot') {
+            steps {
+                sh 'echo Building SpringBoot...'
+                git branch: 'devops', url: 'https://github.com/revaturelabs/forge-review-service'
+                sh script:'''
+                    #!/bin/bash
+                    cd ForgeBackend
+					echo Building SpringBoot
+					mvn verify
+                    '''
+                }
+            }
+        stage('Building Angular') {
+            steps {
+                sh 'echo Building Angular...'
+                git branch: 'devops', url: 'https://github.com/revaturelabs/forge-frontend'
+                sh script:'''
+                #!/bin/bash
+                cd Forge
+                ng build
+                '''
+            }
+        }
+        
+            
+        stage('Deploying') {
+            steps {
+                echo 'Deploying...'
+            }
+        }
+    }
+}
+
